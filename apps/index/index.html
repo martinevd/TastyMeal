@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TastyMeal</title>
+    <link rel="stylesheet" type="text/css" href="/apps/index/index.css">
+    <script src="/apps/index/index.js" defer></script>
+</head>
+
+<header>
+    <p>TastyMeal</p>
+    <nav>
+        <a href="/apps/index/index.html">Toutes les recettes</a>
+        <a>Recette aléatoire</a>
+        <a>Timer</a>
+    </nav>
+</header>
+
+<body>
+    <h1> Toutes les recettes </h1>
+
+    <label>Choose a type:</label>
+
+    <select name="types" id="type-select">
+      <option value="">All meals</option>
+    </select>
+
+    <div id="meals"></div>
+    
+    <div id="popup-overlay" class="hidden">
+        <div id="meal-popup" class="popup-content">
+            <button id="close-popup" class="close-btn" onclick="closePopup()">&times;</button>
+        </div>
+    </div>
+</body>
+</html>

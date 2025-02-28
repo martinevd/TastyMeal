@@ -1,0 +1,124 @@
+header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    color: black;
+}
+
+header p{
+    font-size: xx-large;
+    font-weight: bold;
+}
+
+header nav{
+    font-size: x-large;
+}
+
+#meals{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+}
+
+.meal{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    margin: 15px;
+    padding: 10px;
+    width: 150px;
+    border: solid 2px #ff6347;
+    border-radius: 10px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    background-color: white;
+    cursor: pointer;
+}
+
+.meal-img{
+  width: 120px;
+  height: 120px;   
+  border-radius: 10px;
+}
+
+.meal:hover{
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    background-color: #ffe5d9;
+}
+
+.hidden {
+    display: none;
+}
+
+#popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 50%;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: center;
+    align-items: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ff6347;
+}
+
+#meal-popup .meal-name{
+    font-size: xx-large;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ff6347;
+}
+
+#meal-popup .meal-video-title, #meal-popup .meal-ingredients-title, #meal-popup .meal-instructions-title{
+    font-size: x-large;
+    font-weight: bold;
+    margin-top: 15px;
+    color: #444;
+    text-decoration: underline;
+}
+
+.meal-category, .meal-area, .meal-ingredient, .meal-instructions{
+    font-size: large;
+    color: #555;
+    margin-top: 8px;
+    text-align: left;
+    width: 90%;
+}
+
+.meal-video {
+    width: 100%;
+    max-width: 560px;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    margin-top: 10px;
+}
