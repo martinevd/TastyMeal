@@ -9,32 +9,33 @@
 </head>
 
 <header>
-    <p>TastyMeal</p>
-    <nav>
-        <a href="/apps/index/index.html">All the meals</a>
-    </nav>
+    <h1>TastyMeal<h1>
 </header>
 
 <body>
-    <h1> All the meals </h1>
 
-    <div id="search-container">
-        <input type="text" id="search-bar" placeholder="Search for a meal...">
-        <button onclick="searchMeals()">🔍</button>
+    <div id="filters-container">
+        
+        <div id = filter-section>
+            <label>Filter by:</label>
+            <select id="filter-type" onchange="updateFilterOptions()">
+                <option value="">All meals</option>
+                <option value="category">Category</option>
+                <option value="area">Area</option>
+                <option value="ingredient">Main Ingredient</option>
+            </select>
+            <select id="filter-options" onchange="filterMeals()">
+                <option value="">Select an option</option>
+            </select>
+            <button id="meal-random-button" onclick="displayRandomMeal()">Random Meal</button>
+        </div>
+
+        <div id="search-container">
+            <input type="text" id="search-bar" placeholder="Search for a meal...">
+            <button onclick="searchMeals()">🔍</button>
+        </div>
     </div>
 
-    <label>Filter by:</label>
-    <select id="filter-type" onchange="updateFilterOptions()">
-        <option value="">All meals</option>
-        <option value="category">Category</option>
-        <option value="area">Area</option>
-        <option value="ingredient">Main Ingredient</option>
-    </select>
-    <select id="filter-options" onchange="filterMeals()">
-        <option value="">Select an option</option>
-    </select>
-
-    <button id="meal-random-button" onclick="displayRandomMeal()">Random Meal</button>
 
     <div id="meals"></div>
 
@@ -43,5 +44,7 @@
     <div id="popup-overlay" class="hidden">
         <div id="meal-popup" class="popup-content"></div>
     </div>
+
+    
 </body>
 </html>

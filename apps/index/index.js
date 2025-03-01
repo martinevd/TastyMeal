@@ -3,61 +3,41 @@ let currentIndex = 0;
 const batchSize = 50;
 let isFiltered = false;
 
-
+// Fetch all meals from the API (alphabetically)
 async function getAllmeals() {
-    //Si déjà exécuté, pas besoin de le réexécuter
-    if (allMeals.length > 0){
-        return allMeals;
-    }
+    if (allMeals.length > 0) return allMeals;
     const baseUrl = "https://www.themealdb.com/api/json/v1/1/search.php?f=";
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
-    let meals = [];
 
-    for (let letter of alphabet) {
-        try {
-            const response = await fetch(baseUrl + letter);
-            const data = await response.json();
-            if (data.meals) {
-                meals = meals.concat(data.meals);
-            }
-        } catch (error) {
-            console.error(`Erreur lors de la récupération des repas pour '${letter}':`, error);
-        }
-    }
-    allMeals = meals;
-    return meals;
+    const requests = alphabet.split('').map(letter => fetch(baseUrl + letter).then(res => res.json()));
+    const results = await Promise.all(requests);
+
+    allMeals = results.flatMap(data => data.meals || []);
+    return allMeals;
 }
 
+// Load meals dynamically in batches when scrolling
 async function loadMoreMeals() {
-    
-    if (isFiltered ||currentIndex >= allMeals.length){ 
-        return;
-    }
+    if (isFiltered || currentIndex >= allMeals.length) return;
     const mealsBatch = allMeals.slice(currentIndex, currentIndex + batchSize);
-    mealsBatch.forEach(displaymeal);
+    mealsBatch.forEach(displayMeal);
     currentIndex += batchSize;
 }
 
+// Fetch filter options (category, area, ingredient)
 async function fetchFilterData(type) {
-    let url;
-    switch (type) {
-        case 'category':
-            url = "https://www.themealdb.com/api/json/v1/1/list.php?c=list";
-            break;
-        case 'area':
-            url = "https://www.themealdb.com/api/json/v1/1/list.php?a=list";
-            break;
-        case 'ingredient':
-            url = "https://www.themealdb.com/api/json/v1/1/list.php?i=list";
-            break;
-        default:
-            return [];
-    }
-    const response = await fetch(url);
+    const urlMap = {
+        'category': "https://www.themealdb.com/api/json/v1/1/list.php?c=list",
+        'area': "https://www.themealdb.com/api/json/v1/1/list.php?a=list",
+        'ingredient': "https://www.themealdb.com/api/json/v1/1/list.php?i=list"
+    };
+    if (!urlMap[type]) return [];
+    const response = await fetch(urlMap[type]);
     const data = await response.json();
     return data.meals;
 }
 
+// Populate filter dropdown based on selected type
 async function updateFilterOptions() {
     const type = document.getElementById("filter-type").value;
     const filterOptions = document.getElementById("filter-options");
@@ -67,57 +47,41 @@ async function updateFilterOptions() {
         const items = await fetchFilterData(type);
         items.forEach(item => {
             const option = document.createElement("option");
-
-            // Sélectionne la bonne clé selon le type
-            let valueKey = "str" + type.charAt(0).toUpperCase() + type.slice(1);
-            if (type === "ingredient") valueKey = "strIngredient";
-
+            let valueKey = (type === "ingredient") ? "strIngredient" : "str" + type.charAt(0).toUpperCase() + type.slice(1);
             option.value = item[valueKey];
             option.textContent = item[valueKey];
-
             filterOptions.appendChild(option);
         });
-    }else{
+    } else {
         return initialRender();
     }
 }
 
+// Fetch meals based on selected filter option
 async function filterMeals() {
     const type = document.getElementById("filter-type").value;
     const value = document.getElementById("filter-options").value;
-    if (!type || !value){ 
-        return initialRender();
-    }
-
+    if (!type || !value) return initialRender();
     
-    let url = `https://www.themealdb.com/api/json/v1/1/filter.php?${type.charAt(0)}=${value}`;
-    console.log(url);
+    isFiltered = true;
+    const url = `https://www.themealdb.com/api/json/v1/1/filter.php?${type.charAt(0)}=${value}`;
     const response = await fetch(url);
     const data = await response.json();
 
-    isFiltered = true
+    if (!data.meals) return cleanAndDisplayMeals([]);
 
-    if (!data.meals) {
-        cleanAndDisplayMeals([]);
-        return;
-    }
-
-    const mealDetailsPromises = data.meals.map(async meal => {
-        const response_meal = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal['idMeal']}`);
-        const data_meal = await response_meal.json();
-        return data_meal.meals ? data_meal.meals[0] : null;
-    });
-
+    const mealDetailsPromises = data.meals.map(meal => 
+        fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal['idMeal']}`)
+            .then(res => res.json())
+            .then(data_meal => data_meal.meals ? data_meal.meals[0] : null)
+    );
+    
     let meals = await Promise.all(mealDetailsPromises);
     meals = meals.filter(meal => meal !== null);
-
     cleanAndDisplayMeals(meals);
-
 }
 
-
-  
-
+// Display meal details in a popup
 function showMealDetails(meal) {
     const overlay = document.getElementById("popup-overlay");
     const details = document.getElementById("meal-popup");
@@ -135,12 +99,11 @@ function showMealDetails(meal) {
     mealName.className = "meal-name";
     details.appendChild(mealName);
 
-    if (meal['strYoutube'] != "") {
-
+    if (meal['strYoutube']) {
         const videoTitle = document.createElement('span');
         videoTitle.textContent = "Video";
         videoTitle.className = "meal-video-title";
-        details.appendChild(videoTitle); 
+        details.appendChild(videoTitle);
 
         const videoYTB = document.createElement('iframe');
         videoYTB.className = "meal-video";
@@ -152,89 +115,59 @@ function showMealDetails(meal) {
         details.appendChild(videoYTB);
     }
     
-    const category = document.createElement('span');
-    category.innerHTML = "<strong>Category:</strong> " + meal['strCategory'];
-    category.className = "meal-category";
-    details.appendChild(category);
-
-    const area = document.createElement('span');
-    area.innerHTML = "<strong>Area:</strong> " + meal['strArea'];
-    area.className = "meal-area";
-    details.appendChild(area);
-
-    const ingredientsTitle = document.createElement('span');
-    ingredientsTitle.textContent = "Ingrédients";
-    ingredientsTitle.className = "meal-ingredients-title";
-    details.appendChild(ingredientsTitle);     
-    for (let i = 1; i <= 20 && meal['strIngredient' + i] != null && meal['strIngredient' + i] != ""; i++) {   
-        const ingredient_i = document.createElement('span');
-        ingredient_i.textContent = meal['strMeasure' + i] + " - " + meal['strIngredient' + i];
-        ingredient_i.className = "meal-ingredient";
-        details.appendChild(ingredient_i);
-    }
-
-    const instructionsTitle = document.createElement('span');
-    instructionsTitle.textContent = "Instructions";
-    instructionsTitle.className = "meal-instructions-title";
-    details.appendChild(instructionsTitle);
-
-    const instructions = document.createElement('span');
-    instructions.textContent = meal['strInstructions'];
-    instructions.className = "meal-instructions";
-    details.appendChild(instructions);
-    
     overlay.classList.remove("hidden");
     overlay.style.display = "flex";
 }
 
+// Close meal details popup
 function closePopup() {
     const overlay = document.getElementById("popup-overlay");
     overlay.classList.add("hidden");
     overlay.style.display = "none";
+    document.getElementById("meal-popup").innerHTML = "";
 }
 
-function displaymeal(mealData) {
+// Display a meal card
+function displayMeal(mealData) {
     const meals = document.getElementById('meals');
-
     const meal = document.createElement('div');
     meal.className = 'meal';
-    meal.onclick = function(){
-        showMealDetails(mealData);
-    }
+    meal.onclick = function(){ showMealDetails(mealData); };
 
     const mealName = document.createElement('span');
     mealName.textContent = mealData["strMeal"];
     mealName.className = "meal-name";
+    meal.appendChild(mealName);
 
     const imageMeal = document.createElement('img');
     imageMeal.src = mealData["strMealThumb"];
     imageMeal.className = "meal-img";
-
-    meal.appendChild(mealName);
     meal.appendChild(imageMeal);
+
     meals.appendChild(meal);
 }
 
-async function cleanMeals(){
-    const wrapper = document.getElementById("meals");
-    while (wrapper.firstChild) {
-        wrapper.removeChild(wrapper.firstChild);
-    }
+// Clear all displayed meals
+async function cleanMeals() {
+    document.getElementById("meals").innerHTML = "";
 }
 
+// Clear and display a new set of meals
 async function cleanAndDisplayMeals(meals) {
     await cleanMeals();
-    meals.forEach(meal => displaymeal(meal));
+    meals.forEach(displayMeal);
 }
 
+// Initial meal loading
 async function initialRender() {
-    cleanMeals()
+    await cleanMeals();
     currentIndex = 0;
     isFiltered = false;
     await getAllmeals();
     loadMoreMeals();
 }
 
+// Observe scroll to load more meals dynamically
 const observer = new IntersectionObserver(entries => {
     if (!isFiltered && entries[0].isIntersecting) {
         loadMoreMeals();
@@ -243,23 +176,21 @@ const observer = new IntersectionObserver(entries => {
 
 observer.observe(document.getElementById("scroll-spy"));
 
+// Display a random meal popup
 async function displayRandomMeal() {
     const response = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
     const data = await response.json();
-    console.log(data.meals[0])
     showMealDetails(data.meals[0]);
 }
 
+// Search meals by name
 function searchMeals() {
     const query = document.getElementById("search-bar").value.toLowerCase();
-    const mealsContainer = document.getElementById("meals");
-    mealsContainer.innerHTML = "";
-
     getAllmeals().then(meals => {
         const filteredMeals = meals.filter(meal => meal.strMeal.toLowerCase().includes(query));
-        filteredMeals.forEach(displaymeal);
+        isFiltered = true;
+        cleanAndDisplayMeals(filteredMeals);
     });
 }
 
 initialRender();
-  
