@@ -114,6 +114,37 @@ function showMealDetails(meal) {
         videoYTB.allowFullscreen = true;
         details.appendChild(videoYTB);
     }
+
+    const category = document.createElement('span');
+    category.innerHTML = "<strong>Category:</strong> " + meal['strCategory'];
+    category.className = "meal-category";
+    details.appendChild(category);
+
+    const area = document.createElement('span');
+    area.innerHTML = "<strong>Area:</strong> " + meal['strArea'];
+    area.className = "meal-area";
+    details.appendChild(area);
+
+    const ingredientsTitle = document.createElement('span');
+    ingredientsTitle.textContent = "Ingrédients";
+    ingredientsTitle.className = "meal-ingredients-title";
+    details.appendChild(ingredientsTitle);     
+    for (let i = 1; i <= 20 && meal['strIngredient' + i]; i++) {   
+        const ingredient_i = document.createElement('span');
+        ingredient_i.textContent = meal['strMeasure' + i] + " - " + meal['strIngredient' + i];
+        ingredient_i.className = "meal-ingredient";
+        details.appendChild(ingredient_i);
+    }
+
+    const instructionsTitle = document.createElement('span');
+    instructionsTitle.textContent = "Instructions";
+    instructionsTitle.className = "meal-instructions-title";
+    details.appendChild(instructionsTitle);
+
+    const instructions = document.createElement('span');
+    instructions.textContent = meal['strInstructions'];
+    instructions.className = "meal-instructions";
+    details.appendChild(instructions);
     
     overlay.classList.remove("hidden");
     overlay.style.display = "flex";
