@@ -3,6 +3,13 @@ Projet réalisé par **Martin EVRARD** (@martinevd) & **Raphael FRANCO** (@Rapha
 
 API utilisé : **TheMealDB** (https://www.themealdb.com/)
 
+## 🚀 Comment utiliser le site ?
+Pour lancer le site en local, ouvrez une invite de commande et exécutez la commande suivante dans le répertoire **TastyMeal** :
+```
+python -m http.server 8000
+```
+Ensuite, ouvrez votre navigateur et accédez à la page d’accueil située dans **`localhost:8000/apps/index/index.html`**.
+
 ## 🌍 Présentation du Site
 TastyMeal est un site web qui répertorie une large sélection de repas du monde entier. Ces recettes sont, par défaut, classées par ordre alphabétique, mais plusieurs options de filtrage sont disponibles pour affiner votre recherche :
 
