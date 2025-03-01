@@ -1,37 +1,121 @@
+let allMeals = [];
+let currentIndex = 0;
+const batchSize = 50;
+let isFiltered = false;
+
+
 async function getAllmeals() {
+    //Si déjà exécuté, pas besoin de le réexécuter
+    if (allMeals.length > 0){
+        return allMeals;
+    }
     const baseUrl = "https://www.themealdb.com/api/json/v1/1/search.php?f=";
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
-    let allmeals = [];
+    let meals = [];
 
     for (let letter of alphabet) {
         try {
             const response = await fetch(baseUrl + letter);
             const data = await response.json();
-
             if (data.meals) {
-                allmeals = allmeals.concat(data.meals);
+                meals = meals.concat(data.meals);
             }
         } catch (error) {
             console.error(`Erreur lors de la récupération des repas pour '${letter}':`, error);
         }
     }
-    return allmeals;
+    allMeals = meals;
+    return meals;
 }
 
-async function getAllCategories() {
-    const url = "https://www.themealdb.com/api/json/v1/1/categories.php";
-    const httpRes = await fetch(url);
-    const data = await httpRes.json();
-    let allcategories = data.categories;
-    return allcategories;
+async function loadMoreMeals() {
+    
+    if (isFiltered ||currentIndex >= allMeals.length){ 
+        return;
+    }
+    const mealsBatch = allMeals.slice(currentIndex, currentIndex + batchSize);
+    mealsBatch.forEach(displaymeal);
+    currentIndex += batchSize;
 }
-  
-  async function getMealsByCategoryUrl(categoryUrl) {
-    const httpRes = await fetch(categoryUrl);
-    const data = await httpRes.json();
-    let mealsOfACategory = data.meals;
-    return mealsOfACategory;
+
+async function fetchFilterData(type) {
+    let url;
+    switch (type) {
+        case 'category':
+            url = "https://www.themealdb.com/api/json/v1/1/list.php?c=list";
+            break;
+        case 'area':
+            url = "https://www.themealdb.com/api/json/v1/1/list.php?a=list";
+            break;
+        case 'ingredient':
+            url = "https://www.themealdb.com/api/json/v1/1/list.php?i=list";
+            break;
+        default:
+            return [];
+    }
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.meals;
 }
+
+async function updateFilterOptions() {
+    const type = document.getElementById("filter-type").value;
+    const filterOptions = document.getElementById("filter-options");
+    filterOptions.innerHTML = "<option value=''>Select an option</option>";
+
+    if (type) {
+        const items = await fetchFilterData(type);
+        items.forEach(item => {
+            const option = document.createElement("option");
+
+            // Sélectionne la bonne clé selon le type
+            let valueKey = "str" + type.charAt(0).toUpperCase() + type.slice(1);
+            if (type === "ingredient") valueKey = "strIngredient";
+
+            option.value = item[valueKey];
+            option.textContent = item[valueKey];
+
+            filterOptions.appendChild(option);
+        });
+    }else{
+        return initialRender();
+    }
+}
+
+async function filterMeals() {
+    const type = document.getElementById("filter-type").value;
+    const value = document.getElementById("filter-options").value;
+    if (!type || !value){ 
+        return initialRender();
+    }
+
+    
+    let url = `https://www.themealdb.com/api/json/v1/1/filter.php?${type.charAt(0)}=${value}`;
+    console.log(url);
+    const response = await fetch(url);
+    const data = await response.json();
+
+    isFiltered = true
+
+    if (!data.meals) {
+        cleanAndDisplayMeals([]);
+        return;
+    }
+
+    const mealDetailsPromises = data.meals.map(async meal => {
+        const response_meal = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal['idMeal']}`);
+        const data_meal = await response_meal.json();
+        return data_meal.meals ? data_meal.meals[0] : null;
+    });
+
+    let meals = await Promise.all(mealDetailsPromises);
+    meals = meals.filter(meal => meal !== null);
+
+    cleanAndDisplayMeals(meals);
+
+}
+
+
   
 
 function showMealDetails(meal) {
@@ -140,44 +224,42 @@ async function cleanMeals(){
 
 async function cleanAndDisplayMeals(meals) {
     await cleanMeals();
-
-    // Limiter à 50 meals maximum
-    const limitedMeals = meals.slice(0, 50);
-    for (let meal of limitedMeals) {
-        displaymeal(meal);
-    }
+    meals.forEach(meal => displaymeal(meal));
 }
 
 async function initialRender() {
-    const meals = await getAllmeals();
-    cleanAndDisplayMeals(meals);
+    cleanMeals()
+    currentIndex = 0;
+    isFiltered = false;
+    await getAllmeals();
+    loadMoreMeals();
 }
 
-
-async function buildCategorySelect() {
-    const allcategories = await getAllCategories();
-    const typeSelect = document.getElementById("type-select");
-    for (const category of allcategories) {
-        const optionEl = document.createElement("option");
-        optionEl.textContent = category.strCategory[0].toUpperCase() + category.strCategory.substring(1);
-        optionEl.value = category.strCategory;
-        typeSelect.appendChild(optionEl);
+const observer = new IntersectionObserver(entries => {
+    if (!isFiltered && entries[0].isIntersecting) {
+        loadMoreMeals();
     }
+}, { rootMargin: "100px" });
 
-    typeSelect.addEventListener("change", async (event) => {
-        const selectedCategory = event.target.value;
-        //console.log("Catégorie sélectionnée :", selectedCategory);
-        if (selectedCategory == "") {
-            initialRender();
-        } else {
-            const url = "https://www.themealdb.com/api/json/v1/1/filter.php?c=" + event.target.value;
-            const meals = await getMealsByCategoryUrl(url);
-            cleanAndDisplayMeals(meals);
-        }
+observer.observe(document.getElementById("scroll-spy"));
+
+async function displayRandomMeal() {
+    const response = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
+    const data = await response.json();
+    console.log(data.meals[0])
+    showMealDetails(data.meals[0]);
+}
+
+function searchMeals() {
+    const query = document.getElementById("search-bar").value.toLowerCase();
+    const mealsContainer = document.getElementById("meals");
+    mealsContainer.innerHTML = "";
+
+    getAllmeals().then(meals => {
+        const filteredMeals = meals.filter(meal => meal.strMeal.toLowerCase().includes(query));
+        filteredMeals.forEach(displaymeal);
     });
 }
 
 initialRender();
-getAllCategories().then(console.log);
-buildCategorySelect();
   

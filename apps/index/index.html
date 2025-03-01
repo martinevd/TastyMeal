@@ -11,27 +11,37 @@
 <header>
     <p>TastyMeal</p>
     <nav>
-        <a href="/apps/index/index.html">Toutes les recettes</a>
-        <a>Recette aléatoire</a>
-        <a>Timer</a>
+        <a href="/apps/index/index.html">All the meals</a>
     </nav>
 </header>
 
 <body>
-    <h1> Toutes les recettes </h1>
+    <h1> All the meals </h1>
 
-    <label>Choose a type:</label>
+    <div id="search-container">
+        <input type="text" id="search-bar" placeholder="Search for a meal...">
+        <button onclick="searchMeals()">🔍</button>
+    </div>
 
-    <select name="types" id="type-select">
-      <option value="">All meals</option>
+    <label>Filter by:</label>
+    <select id="filter-type" onchange="updateFilterOptions()">
+        <option value="">All meals</option>
+        <option value="category">Category</option>
+        <option value="area">Area</option>
+        <option value="ingredient">Main Ingredient</option>
+    </select>
+    <select id="filter-options" onchange="filterMeals()">
+        <option value="">Select an option</option>
     </select>
 
+    <button id="meal-random-button" onclick="displayRandomMeal()">Random Meal</button>
+
     <div id="meals"></div>
+
+    <div id="scroll-spy"></div>
     
     <div id="popup-overlay" class="hidden">
-        <div id="meal-popup" class="popup-content">
-            <button id="close-popup" class="close-btn" onclick="closePopup()">&times;</button>
-        </div>
+        <div id="meal-popup" class="popup-content"></div>
     </div>
 </body>
 </html>
